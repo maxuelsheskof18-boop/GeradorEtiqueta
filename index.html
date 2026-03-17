@@ -1,217 +1,343 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-PT">
 <head>
-  <meta charset="UTF-8">
-  <title>Gerador ZPL PRO - Layout e Fontes Livres</title>
+  <meta charset="utf-8" />
+  <title>Gerador ZPL PRO - Funcional (Preview Local)</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <style>
-    body { font-family: 'Segoe UI', Arial, sans-serif; padding: 20px; max-width: 1100px; margin: auto; background-color: #f4f4f9; }
-    .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-    h2 { color: #333; text-align: center; }
-    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-    label { font-weight: bold; margin-top: 10px; display: block; font-size: 14px; color: #444; }
-    input[type="text"], input[type="number"], select { width: 100%; margin-top: 5px; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-    .full-width { grid-column: span 2; }
-    
-    .text-panel { background: #fdfdfd; border: 1px solid #ddd; padding: 15px; border-radius: 6px; margin-top: 10px; }
-    .linha-controle { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; }
-    .linha-controle input[type="text"] { flex: 3; }
-    .linha-controle input[type="number"] { flex: 1; min-width: 70px; }
-    .linha-controle .checkbox-box { flex: 1; display: flex; align-items: center; gap: 5px; font-size: 14px; font-weight: bold; cursor: pointer; }
-    
-    .button-group { display: flex; gap: 10px; margin-top: 20px; }
-    .btn { flex: 1; padding: 12px; border: none; border-radius: 4px; color: white; font-weight: bold; font-size: 16px; cursor: pointer; transition: 0.2s; }
-    .btn-generate { background-color: #28a745; }
-    .btn-copy { background-color: #007bff; }
-    .btn-download { background-color: #ff9800; }
-    .btn:hover { opacity: 0.9; }
-    
-    .results-area { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px; }
-    #saidaZPL { background: #2b2b2b; color: #4af626; width: 100%; height: 500px; resize: vertical; padding: 10px; font-family: monospace; border-radius: 4px; box-sizing: border-box;}
-    .preview-box { border: 1px solid #ccc; padding: 15px; background: #e9ecef; border-radius: 4px; display: flex; align-items: center; justify-content: center; min-height: 500px; flex-direction: column; text-align: center; }
-    .preview-box img { max-width: 100%; height: auto; box-shadow: 0 4px 8px rgba(0,0,0,0.2); background: white; }
-    .preview-title { margin-bottom: 15px; font-weight: bold; color: #555; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; padding: 20px; max-width: 1000px; margin: auto; background:#f4f4f9; }
+    .card { background:#fff; padding:20px; border-radius:8px; box-shadow:0 2px 10px rgba(0,0,0,.08); }
+    h2 { text-align:center; color:#333; margin-top:0; }
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:15px;}
+    label{display:block;font-weight:600;color:#444;margin-bottom:6px;}
+    input[type="text"], input[type="number"], select, textarea { width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; box-sizing:border-box; }
+    .full-width{grid-column:span 2;}
+    .text-panel{background:#fbfbfb;border:1px solid #e6e6e6;padding:12px;border-radius:6px;}
+    .linha-controle{display:flex;gap:10px;align-items:center;margin-bottom:10px;}
+    .linha-controle input[type="text"]{flex:3}
+    .linha-controle input[type="number"]{flex:1;min-width:70px}
+    .checkbox-box{display:flex;align-items:center;gap:6px}
+    .button-group{display:flex;gap:10px;margin-top:14px}
+    .btn{flex:1;padding:11px;border-radius:6px;border:0;color:#fff;font-weight:700;cursor:pointer}
+    .btn-generate{background:#28a745} .btn-copy{background:#007bff} .btn-download{background:#ff9800}
+    .results-area{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:18px}
+    #saidaZPL{height:400px;background:#1f1f1f;color:#7CFF82;padding:10px;border-radius:6px;font-family:monospace;resize:vertical}
+    .preview-box{border:1px solid #d8d8d8;background:#eef1f3;padding:14px;border-radius:6px;min-height:400px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start}
+    .preview-title{background:#ffd700;padding:6px 10px;border-radius:6px;margin-bottom:12px;font-weight:700;color:#333}
+    #previewCanvas{width:100%;height:400px;border-radius:4px;background:#fff;display:block;border:1px solid #ccc}
+    #loadingMsg{color:#0b5ed7;font-weight:700;margin-bottom:10px;display:none}
+    .small-note{font-size:13px;color:#666;margin-top:8px}
   </style>
 </head>
 <body>
+  <div class="card">
+    <h2>🎯 Gerador ZPL PRO</h2>
 
-<div class="card">
-  <h2>🎯 Gerador ZPL PRO</h2>
+    <div class="grid">
+      <div class="full-width">
+        <label for="formatoEtiqueta">Formato da Etiqueta (Tamanho e Layout)</label>
+        <select id="formatoEtiqueta">
+          <option value="100x150_3" selected>100x150 mm (Grande) - Imprimir 3 Etiquetas Empilhadas</option>
+          <option value="100x150_1">100x150 mm (Grande) - 1 Etiqueta</option>
+          <option value="100x50_1">100x50 mm (Média) - Padrão de Gôndola</option>
+          <option value="40x25_1">40x25 mm (Pequena) - Etiqueta de Preço</option>
+        </select>
+      </div>
 
-  <div class="grid">
-    <div>
-      <label>Tamanho da Etiqueta Física</label>
-      <select id="tamanhoEtiqueta">
-        <option value="100x150" selected>100x150 mm (Grande)</option>
-        <option value="100x50">100x50 mm (Média)</option>
-        <option value="40x25">40x25 mm (Pequena)</option>
-      </select>
-    </div>
+      <div class="full-width text-panel">
+        <label style="margin:0 0 10px 0">📝 Controlo de Textos e Fontes</label>
 
-    <div>
-      <label>Layout de Impressão</label>
-      <select id="layoutImpressao">
-        <option value="3">Imprimir 3 Etiquetas por Página (Empilhadas)</option>
-        <option value="1">Imprimir 1 Etiqueta Gigante (Preenche a folha)</option>
-      </select>
-    </div>
+        <div class="linha-controle">
+          <input type="text" id="txt1" placeholder="Linha 1" value="CAIXA DE COPO 180ML" />
+          <input type="number" id="size1" value="70" />
+          <label class="checkbox-box"><input type="checkbox" id="bold1" checked> Negrito</label>
+        </div>
+        <div class="linha-controle">
+          <input type="text" id="txt2" placeholder="Linha 2" value="BRANCO 25 PCT C/ 100 UND" />
+          <input type="number" id="size2" value="35" />
+          <label class="checkbox-box"><input type="checkbox" id="bold2" checked> Negrito</label>
+        </div>
+        <div class="linha-controle">
+          <input type="text" id="txt3" placeholder="Linha 3" value="2500 COPOS" />
+          <input type="number" id="size3" value="50" />
+          <label class="checkbox-box"><input type="checkbox" id="bold3" checked> Negrito</label>
+        </div>
+        <div class="linha-controle">
+          <input type="text" id="txt4" placeholder="Linha 4" value="" />
+          <input type="number" id="size4" value="35" />
+          <label class="checkbox-box"><input type="checkbox" id="bold4"> Negrito</label>
+        </div>
+        <div class="linha-controle">
+          <input type="text" id="txt5" placeholder="Linha 5" value="" />
+          <input type="number" id="size5" value="30" />
+          <label class="checkbox-box"><input type="checkbox" id="bold5"> Negrito</label>
+        </div>
+      </div>
 
-    <div class="full-width text-panel">
-      <label style="margin-top:0; border-bottom: 2px solid #ccc; padding-bottom: 5px; margin-bottom: 15px;">📝 Controle de Textos e Fontes</label>
-      
-      <div class="linha-controle">
-        <input type="text" id="txt1" placeholder="Linha 1" value="CAIXA DE COPO 180ML" />
-        <input type="number" id="size1" value="70" title="Tamanho da Fonte" />
-        <label class="checkbox-box"><input type="checkbox" id="bold1" checked> Negrito</label>
-      </div>
-      <div class="linha-controle">
-        <input type="text" id="txt2" placeholder="Linha 2" value="BRANCO 25 PCT C/ 100 UND" />
-        <input type="number" id="size2" value="35" title="Tamanho da Fonte" />
-        <label class="checkbox-box"><input type="checkbox" id="bold2" checked> Negrito</label>
-      </div>
-      <div class="linha-controle">
-        <input type="text" id="txt3" placeholder="Linha 3" value="2500 COPOS" />
-        <input type="number" id="size3" value="50" title="Tamanho da Fonte" />
-        <label class="checkbox-box"><input type="checkbox" id="bold3" checked> Negrito</label>
-      </div>
-      <div class="linha-controle">
-        <input type="text" id="txt4" placeholder="Linha 4" value="" />
-        <input type="number" id="size4" value="35" title="Tamanho da Fonte" />
-        <label class="checkbox-box"><input type="checkbox" id="bold4"> Negrito</label>
-      </div>
-      <div class="linha-controle">
-        <input type="text" id="txt5" placeholder="Linha 5" value="" />
-        <input type="number" id="size5" value="30" title="Tamanho da Fonte" />
-        <label class="checkbox-box"><input type="checkbox" id="bold5"> Negrito</label>
-      </div>
-    </div>
-
-    <div class="full-width">
-        <label>Quantidade de Folhas a Imprimir</label>
+      <div class="full-width">
+        <label for="copias">Quantidade de Folhas a Imprimir</label>
         <input type="number" id="copias" min="1" value="1" />
+      </div>
+    </div>
+
+    <div class="button-group">
+      <button id="btnGenerate" class="btn btn-generate" onclick="gerarZPL()">🔄 Gerar e Visualizar</button>
+      <button id="btnCopy" class="btn btn-copy" onclick="copiarZPL()">📋 Copiar ZPL</button>
+      <button id="btnDownload" class="btn btn-download" onclick="baixarZPL()">💾 Baixar .ZPL</button>
+    </div>
+
+    <div class="results-area">
+      <div>
+        <label>Código ZPL (Pronto para Impressora):</label>
+        <textarea id="saidaZPL" readonly></textarea>
+      </div>
+
+      <div class="preview-box">
+        <div class="preview-title" id="previewStatus">👀 Visualização (Local)</div>
+        <div id="loadingMsg">⏳ A gerar pré-visualização...</div>
+        <canvas id="previewCanvas"></canvas>
+        <div class="small-note">Pré-visualização local (aplicação cliente) — aproximação do layout real.</div>
+      </div>
     </div>
   </div>
 
-  <div class="button-group">
-    <button class="btn btn-generate" onclick="gerarZPL()">🔄 Gerar e Visualizar</button>
-    <button class="btn btn-copy" onclick="copiarZPL()">📋 Copiar ZPL</button>
-    <button class="btn btn-download" onclick="baixarZPL()">💾 Baixar .ZPL</button>
-  </div>
+  <script>
+    const configs = {
+      "100x150_3": { pw: 812, ll: 1218, boxW: 720, boxH: 360, boxX: 40, yOffsets: [20, 420, 820], gapY: 40, prevW: "4", prevH: "6", dpmm: 8, labelMm: [100,150] },
+      "100x150_1": { pw: 812, ll: 1218, boxW: 750, boxH: 1150, boxX: 30, yOffsets: [30], gapY: 60, prevW: "4", prevH: "6", dpmm: 8, labelMm: [100,150] },
+      "100x50_1":  { pw: 812, ll: 406, boxW: 750, boxH: 346, boxX: 30, yOffsets: [30], gapY: 30, prevW: "4", prevH: "2", dpmm: 8, labelMm: [100,50] },
+      "40x25_1":   { pw: 320, ll: 200, boxW: 300, boxH: 180, boxX: 10, yOffsets: [10], gapY: 15, prevW: "1.5", prevH: "1", dpmm: 8, labelMm: [40,25] }
+    };
 
-  <div class="results-area">
-    <div>
-      <label>Código ZPL Gerado:</label>
-      <textarea id="saidaZPL" readonly></textarea>
-    </div>
-    
-    <div class="preview-box">
-      <div class="preview-title">Visualização Real (Labelary)</div>
-      <img id="imagemPreview" src="" alt="Clique no botão verde para visualizar..." style="display: none;" />
-    </div>
-  </div>
-</div>
+    // Renderiza preview aproximado em canvas
+    function renderLabelPreviewCanvas(canvasId, options, linhas) {
+      const canvas = document.getElementById(canvasId);
+      if (!canvas) return;
+      const rect = canvas.getBoundingClientRect();
+      const DPR = window.devicePixelRatio || 1;
+      canvas.width = Math.round(rect.width * DPR);
+      canvas.height = Math.round(rect.height * DPR);
+      canvas.style.width = rect.width + "px";
+      canvas.style.height = rect.height + "px";
 
-<script>
-  function gerarLinhaZPL(texto, x, y, larguraBox, tamanho, isBold) {
-      if (!texto.trim()) return "";
-      
-      let larguraFonte = Math.round(tamanho * 0.65); // Ajuste ideal para fonte Zebra
-      let posX = Math.round(x);
-      let posY = Math.round(y); // Arredondando para evitar erro de decimal
-      
-      // FB com limite de 10 linhas permite que o texto quebre sozinho sem atropelar
-      let zpl = `^A0N,${tamanho},${larguraFonte}\n^FO${posX},${posY}^FB${larguraBox},10,0,C^FD${texto}^FS\n`;
-      
-      if (isBold) {
-          zpl += `^A0N,${tamanho},${larguraFonte}\n^FO${posX+2},${posY}^FB${larguraBox},10,0,C^FD${texto}^FS\n`;
-          zpl += `^A0N,${tamanho},${larguraFonte}\n^FO${posX},${posY+2}^FB${larguraBox},10,0,C^FD${texto}^FS\n`;
+      const ctx = canvas.getContext("2d");
+      ctx.setTransform(1,0,0,1,0,0);
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      ctx.scale(DPR, DPR);
+
+      // mm -> px CSS (approx)
+      const CSS_DPI = 96;
+      const mmToPx = CSS_DPI / 25.4;
+
+      const widthMm = options.widthMm || 100;
+      const heightMm = options.heightMm || 150;
+      const marginMm = (typeof options.marginMm === 'number') ? options.marginMm : 6;
+
+      const labelW = widthMm * mmToPx;
+      const labelH = heightMm * mmToPx;
+      const marginPx = marginMm * mmToPx;
+
+      const availableW = rect.width;
+      const availableH = rect.height;
+      const scale = Math.min(availableW / labelW, availableH / labelH);
+
+      const offsetX = (availableW - labelW * scale) / 2;
+      const offsetY = (availableH - labelH * scale) / 2;
+
+      ctx.save();
+      ctx.translate(offsetX, offsetY);
+      ctx.scale(scale, scale);
+
+      // background label + border
+      ctx.fillStyle = "#fff";
+      ctx.fillRect(0,0,labelW,labelH);
+      ctx.strokeStyle = "#222";
+      ctx.lineWidth = Math.max(1, 1 * (25.4 / CSS_DPI));
+      ctx.strokeRect(0.5,0.5,labelW-1,labelH-1);
+
+      const contentX = marginPx;
+      let currentY = marginPx;
+
+      const contentWidth = labelW - marginPx*2;
+      const centerX = contentX + contentWidth/2;
+
+      ctx.textAlign = "center";
+      ctx.textBaseline = "top";
+      ctx.fillStyle = "#000";
+
+      function sizeToPx(size) {
+        return Math.max(8, Math.round(size * 0.45));
       }
-      return zpl;
-  }
 
-  function gerarZPL() {
-    const tamanho = document.getElementById("tamanhoEtiqueta").value;
-    const layout = document.getElementById("layoutImpressao").value;
-    const copias = parseInt(document.getElementById("copias").value) || 1;
+      for (let i=0;i<linhas.length;i++) {
+        const ln = linhas[i];
+        if (!ln) continue;
 
-    let linhas = [];
-    for(let i=1; i<=5; i++) {
-        linhas.push({
-            texto: document.getElementById(`txt${i}`).value,
-            tamanho: parseInt(document.getElementById(`size${i}`).value) || 30,
-            negrito: document.getElementById(`bold${i}`).checked
-        });
-    }
+        if (ln.type === 'barcode') {
+          const barcodeWidth = Math.min(contentWidth*0.9, 360);
+          const barcodeHeight = ln.heightPx || 120;
+          const bx = centerX - barcodeWidth/2;
+          const by = currentY;
 
-    let config = {};
+          ctx.fillStyle = "#fff";
+          ctx.fillRect(bx, by, barcodeWidth, barcodeHeight);
 
-    if (tamanho === "100x150") {
-        if (layout === "3") {
-            config = { pw: 812, ll: 1218, wInch: 4, hInch: 6, boxW: 720, boxH: 360, boxX: 40, yOffsets: [20, 420, 820], espacamentoInicialY: 30 };
-        } else {
-            config = { pw: 812, ll: 1218, wInch: 4, hInch: 6, boxW: 750, boxH: 1150, boxX: 30, yOffsets: [30], espacamentoInicialY: 50 };
-        }
-    } else if (tamanho === "100x50") {
-        document.getElementById("layoutImpressao").value = "1";
-        config = { pw: 812, ll: 406, wInch: 4, hInch: 2, boxW: 750, boxH: 346, boxX: 30, yOffsets: [30], espacamentoInicialY: 20 };
-    } else if (tamanho === "40x25") {
-        document.getElementById("layoutImpressao").value = "1";
-        config = { pw: 320, ll: 200, wInch: 1.5, hInch: 1, boxW: 300, boxH: 180, boxX: 10, yOffsets: [10], espacamentoInicialY: 10 };
-    }
-
-    let zplBase = `^XA\n^CI28\n^PW${config.pw}\n^LL${config.ll}\n`;
-
-    config.yOffsets.forEach(startY => {
-        zplBase += `^FO${config.boxX},${startY}^GB${config.boxW},${config.boxH},4^FS\n`;
-        let posicaoYAtual = startY + config.espacamentoInicialY;
-
-        linhas.forEach(linha => {
-            if (linha.texto.trim() !== "") {
-                // Inteligência de Quebra de Linha: Calcula quantas linhas a frase vai ocupar
-                let larguraEstimadaTexto = linha.texto.length * (linha.tamanho * 0.60);
-                let numeroDeLinhas = Math.ceil(larguraEstimadaTexto / config.boxW);
-                if (numeroDeLinhas < 1) numeroDeLinhas = 1;
-
-                // Gera o texto
-                zplBase += gerarLinhaZPL(linha.texto, config.boxX, posicaoYAtual, config.boxW, linha.tamanho, linha.negrito);
-                
-                // Empurra a próxima linha considerando se o texto anterior quebrou e precisou de mais espaço
-                posicaoYAtual += Math.round((linha.tamanho * numeroDeLinhas) + (linha.tamanho * 0.25)); 
+          // desenha barras pseudo - representativo
+          const digits = (ln.texto || "").replace(/\D/g, '');
+          const totalBars = 80;
+          const barW = barcodeWidth / totalBars;
+          ctx.fillStyle = "#000";
+          for (let b=0;b<totalBars;b++) {
+            const d = digits.length ? parseInt(digits[b % digits.length] || '0', 10) : (b % 2);
+            const draw = (d % 2) === 0;
+            if (draw) {
+              const x = bx + b * barW;
+              ctx.fillRect(Math.round(x), by, Math.max(1, Math.round(barW)), barcodeHeight - 10);
             }
+          }
+          ctx.fillStyle = "#000";
+          ctx.font = `14px Arial`;
+          ctx.fillText(ln.texto, centerX, by + barcodeHeight - 8);
+          currentY += barcodeHeight + 10;
+          continue;
+        }
+
+        // texto
+        const fontPx = sizeToPx(ln.tamanho || 30);
+        const weight = ln.negrito ? "700" : "400";
+        ctx.font = `${weight} ${fontPx}px Arial, sans-serif`;
+        ctx.fillStyle = "#000";
+        if (ln.negrito) ctx.fillText(ln.texto, centerX + 1, currentY + 0.5);
+        ctx.fillText(ln.texto, centerX, currentY);
+        const gap = Math.round(fontPx * 0.28);
+        currentY += fontPx + gap;
+        if (currentY > labelH - marginPx) break;
+      }
+
+      ctx.restore();
+    }
+
+    // Gera ZPL e atualiza preview (preview local em canvas)
+    function gerarZPL() {
+      const btn = document.getElementById("btnGenerate");
+      btn.disabled = true;
+
+      const formato = document.getElementById("formatoEtiqueta").value;
+      const config = configs[formato];
+      const copias = parseInt(document.getElementById("copias").value) || 1;
+
+      document.getElementById("previewStatus").innerText = formato === "100x150_3"
+        ? "👀 A mostrar 1 de 3 caixas (pré-visualização local)"
+        : "👀 Visualização (local)";
+
+      const linhasInput = [];
+      for (let i=1;i<=5;i++) {
+        const txt = document.getElementById(`txt${i}`).value.trim();
+        if (txt) {
+          linhasInput.push({
+            texto: txt,
+            tamanho: parseInt(document.getElementById(`size${i}`).value) || 30,
+            bold: document.getElementById(`bold${i}`).checked
+          });
+        }
+      }
+
+      // Montagem do ZPL (mantive sua lógica com ^FB)
+      let zplBody = "";
+      config.yOffsets.forEach(startY => {
+        zplBody += `^FO${config.boxX},${startY}^GB${config.boxW},${config.boxH},4^FS\n`;
+        let currentY = startY + 20;
+        linhasInput.forEach(line => {
+          zplBody += `^FO${config.boxX},${currentY}^FB${config.boxW},1,0,C\n`;
+          zplBody += `^A0N,${line.tamanho},${Math.floor(line.tamanho * 0.6)}^FD${escapeZPL(line.texto)}^FS\n`;
+          if (line.bold) {
+            zplBody += `^FO${config.boxX+1},${currentY}^FB${config.boxW},1,0,C\n`;
+            zplBody += `^A0N,${line.tamanho},${Math.floor(line.tamanho * 0.6)}^FD${escapeZPL(line.texto)}^FS\n`;
+          }
+          currentY += line.tamanho + 12;
         });
+      });
+
+      const zpl = `^XA\n^CI28\n^PW${config.pw}\n^LL${config.ll}\n${zplBody}^XZ\n`;
+      document.getElementById("saidaZPL").value = Array(copias).fill(zpl).join("\n");
+
+      // Preparar linhas para preview em canvas (apenas 1 etiqueta)
+      const linhasPreview = [];
+      // adiciona as 5 linhas principais (se existirem)
+      linhasInput.forEach(l => linhasPreview.push({ texto: l.texto, tamanho: l.tamanho, negrito: l.bold }));
+      // mostramos mais abaixo do centro: rodapé exemplo (mantive simples)
+      const fabricante = document.getElementById("txt4") ? document.getElementById("txt4").value : '';
+      // opcional: adicionar campos adicionais se quiser (não obrigatório)
+
+      // Renderiza usando dimensões reais do formato selecionado
+      const mm = config.labelMm || [100,150];
+      renderLabelPreviewCanvas('previewCanvas', { widthMm: mm[0], heightMm: mm[1], marginMm: 8 }, linhasPreview);
+
+      btn.disabled = false;
+    }
+
+    function escapeZPL(text) {
+      return (text || '').toString().replace(/\r/g,'');
+    }
+
+    async function copiarZPL() {
+      const txt = document.getElementById("saidaZPL").value;
+      if (!txt.trim()) { alert("Gere o código primeiro."); return; }
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(txt);
+        } else {
+          const area = document.getElementById("saidaZPL");
+          area.select();
+          document.execCommand("copy");
+          window.getSelection().removeAllRanges();
+        }
+        alert("Código ZPL copiado!");
+      } catch (e) {
+        alert("Erro ao copiar: " + e.message);
+      }
+    }
+
+    function baixarZPL() {
+      const conteudo = document.getElementById("saidaZPL").value;
+      if (!conteudo.trim()) { alert("Gere o código primeiro."); return; }
+      const blob = new Blob([conteudo], { type: "text/plain" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      const nome = (document.getElementById("txt1") ? document.getElementById("txt1").value : "etiqueta").replace(/[^a-z0-9]/gi,'_').toLowerCase() || "etiqueta";
+      a.download = `etiqueta_${nome}.zpl`;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(()=> {
+        URL.revokeObjectURL(a.href);
+        document.body.removeChild(a);
+      }, 150);
+    }
+
+    // Atualiza preview automaticamente ao digitar (debounce)
+    let debounceTimer;
+    const watchIds = ["txt1","size1","bold1","txt2","size2","bold2","txt3","size3","bold3","txt4","size4","bold4","txt5","size5","bold5","formatoEtiqueta"];
+    watchIds.forEach(id => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.addEventListener('input', () => {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+          gerarZPL();
+        }, 300);
+      });
     });
 
-    zplBase += `^XZ`;
+    // Gera preview inicial
+    window.addEventListener('load', () => {
+      gerarZPL();
+    });
 
-    const imagemPreview = document.getElementById("imagemPreview");
-    const zplEncoded = encodeURIComponent(zplBase.replace(/\n/g, ' '));
-    const urlLabelary = `https://api.labelary.com/v1/printers/8/labels/${config.wInch}x${config.hInch}/0/${zplEncoded}`;
-    
-    imagemPreview.onload = () => { imagemPreview.style.display = "block"; };
-    imagemPreview.onerror = () => { alert("Erro ao carregar visualização. Sua etiqueta pode estar com texto demais ou sua internet falhou."); };
-    imagemPreview.src = urlLabelary;
-
-    let zplFinal = "";
-    for (let i = 0; i < copias; i++) { zplFinal += zplBase + "\n\n"; }
-    document.getElementById("saidaZPL").value = zplFinal.trim();
-  }
-
-  function copiarZPL() {
-    const zpl = document.getElementById("saidaZPL");
-    if(zpl.value.trim() === "") { alert("Gere o código primeiro!"); return; }
-    zpl.select(); document.execCommand("copy"); alert("ZPL copiado com sucesso!");
-  }
-
-  function baixarZPL() {
-    const zplConteudo = document.getElementById("saidaZPL").value;
-    if(zplConteudo.trim() === "") { alert("Gere o código primeiro!"); return; }
-    const blob = new Blob([zplConteudo], { type: "text/plain" });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    const nomeArquivo = document.getElementById("txt1").value.replace(/[^a-z0-9]/gi, '_').toLowerCase();
-    link.download = `etiqueta_${nomeArquivo || "produto"}.zpl`;
-    document.body.appendChild(link); link.click(); document.body.removeChild(link);
-  }
-</script>
-
+    // Ajusta canvas quando a janela for redimensionada
+    window.addEventListener('resize', () => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => gerarZPL(), 250);
+    });
+  </script>
 </body>
 </html>
